@@ -1,0 +1,349 @@
+:PROPERTIES:
+:ID:       F9BFCD93-FB1A-4EBD-BC89-7B088358E0D4
+:END:
+#+title: Vanilla Emacs 29 Configuration
+#+startup: overview
+
+This is configuration of vanilla Emacs 29 without external packages.
+It is optimised for users of emacs-mac
+([[https://github.com/railwaycat/homebrew-emacsmacport][railwaycat/homebrew-emacsmacport]]) that adds macOS-specific goodies.
+
+It's useful to start using Emacs from scratch having sane defaults.
+
+* Launch Emacs with this configuration
+The idea is to tangle Emacs Lisp source code blocks into init.el file
+and then launch Emacs.
+
+#+begin_src sh :results silent
+open -n /Applications/MacPorts/EmacsMac.app --args --init-directory ~/.config/emacs.vanilla
+#+end_src
+
+#+caption: recreate emacs.vanilla directory
+#+begin_src sh
+cd ~/.config
+rm -rf emacs.vanilla
+mkdir emacs.vanilla
+cp ~/Documents/Projects/Dotfiles/early-init.el emacs/vanilla-29.el emacs.vanilla
+touch emacs.vanilla/init.el
+echo "$(date): emacs.vanilla directory recreated"
+#+end_src
+
+#+RESULTS:
+: Fri Apr 19 09:40:28 CEST 2024: emacs.vanilla directory recreated
+** Run Emacs without configuration
+#+begin_src sh :results silent
+open -n /Applications/MacPorts/EmacsMac.app --args -Q
+#+end_src
+
+** Run Emacs in a temp directory
+#+begin_src sh :results silent
+open -n /Applications/MacPorts/EmacsMac.app --args --init-directory /tmp/emacs-4321
+#+end_src
+
+* Tangle Elisp from buffer
+#+begin_src emacs-lisp :results silent
+(setq vc-follow-symlinks t)
+
+(require 'org)
+
+(defun my-tangle-elisp-from-buffer (target)
+  "Tangle all emacs-lisp source code blocks into TARGET file."
+  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp"))
+#+end_src
+
+
+#+begin_src emacs-lisp :tangle no
+(my-tangle-elisp-from-buffer "~/.config/emacs.vanilla/init.el")
+(my-tangle-elisp-from-buffer "init.el")
+#+end_src
+
+* Packages
+
+* Comment macro
+#+begin_src emacs-lisp
+(defmacro comment (&rest body)
+  "Comment out one or more s-expressions."
+  nil)
+#+end_src
+
+* Visuals
+#+begin_src emacs-lisp
+(setq native-comp-async-report-warnings-errors 'silent)
+
+;; (tool-bar-mode -1) ; it loves to be in init.el, not in early-init.el
+(scroll-bar-mode -1)
+(fringe-mode '(5 . 5))
+(setq frame-resize-pixelwise t)
+(setq frame-title-format "Emacs Vanilla – %b")
+
+;; enable .dir-locals.el
+;; (add-to-list 'safe-local-variable-values
+;; 	     '(org-roam-directory . (file-truename "~/Documents/Notes")))
+
+(add-to-list 'safe-local-variable-values
+	     '(org-roam-db-location . "~/.config/emacs/org-roam.db"))
+
+(let ((f (file-name-concat user-emacs-directory "custom.el")))
+  (setq custom-file f)
+  (unless (file-exists-p f)
+    (shell-command (format "touch \"%s\"" f)))
+  (load custom-file))
+
+(setq-default cursor-type 'bar)
+;; (blink-cursor-mode 0)
+
+(define-key (current-global-map) (kbd "H-l") #'global-tab-line-mode)
+(define-key (current-global-map) (kbd "H-L") #'tab-bar-mode)
+
+#+end_src
+
+* Advising `load-theme'
+[[https://www.reddit.com/r/emacs/comments/1bt41m1/why_doesnt_this_piece_of_adviceadd_code_work/][Why doesn't this piece of advice-add code work? : r/emacs]]
+
+#+begin_src emacs-lisp :results silent
+(defun my-disable-all-themes (&rest _)
+    (mapcar #'disable-theme custom-enabled-themes))
+
+(advice-add 'load-theme :before 'my-disable-all-themes)
+#+end_src
+
+* macOS specific
+#+begin_src emacs-lisp
+(setq
+ mac-command-modifier 'super
+ mac-option-modifier 'meta
+ mac-right-option-modifier 'hyper
+ mac-control-modifier 'control
+ mac-right-control-modifier 'control
+ ns-use-native-fullscreen t)
+#+end_src
+
+* Better defaults
+#+begin_src emacs-lisp
+;;(global-so-long-mode 1)
+
+(setq
+  scroll-margin 0
+  scroll-step 1
+  next-line-add-newlines t
+  visible-bell t
+  scroll-conservatively 10000
+  scroll-preserve-screen-position t
+  mouse-wheel-follow-mouse t
+  mouse-wheel-scroll-amount '(1 ((shift) . 1))
+  require-final-newline t)
+
+(setq-default
+  auto-save-default nil
+  make-backup-files nil
+  delete-by-moving-to-trash t
+  indent-tabs-mode nil
+  inhibit-startup-message nil
+  inhibit-startup-screen nil
+  cursor-in-non-selected-windows nil
+  echo-keystrokes 0.01
+  help-window-select t
+  large-file-warning-threshold 10000000
+  use-short-answers t
+  next-error-message-highlight t
+  recenter-positions '(top middle bottom))
+
+(global-auto-revert-mode t)
+(delete-selection-mode 1)
+
+(dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
+  (put c 'disabled nil))
+
+#+end_src
+
+* Font
+#+begin_src emacs-lisp
+(setq-default line-spacing 0)
+(set-fontset-font "fontset-default" 'cyrillic "Helvetica")
+
+(require 'subr-x)
+
+(defun variable-pitch-mode-on ()
+  "Enable `variable-pitch-mode'."
+  (variable-pitch-mode 1))
+
+(defun variable-pitch-mode-off ()
+  "Disable `variable-pitch-mode'."
+  (variable-pitch-mode -1))
+
+(add-hook 'text-mode-hook #'variable-pitch-mode-on)
+(add-hook 'prog-mode-hook #'variable-pitch-mode-off)
+(add-hook 'yaml-mode-hook #'variable-pitch-mode-off)
+
+(defun my-set-fonts (fonts)
+  "Set font using provided alists in FONTS."
+  (let ((fixed (cdr (assoc 'fixed fonts)))
+        (variable (cdr (assoc 'variable fonts))))
+    (apply #'set-face-attribute 'default nil fixed)
+    (apply #'set-face-attribute 'fixed-pitch nil fixed)
+    (apply #'set-face-attribute 'variable-pitch nil variable)))
+
+#+end_src
+
+Setting font depending on the machine I'm on:
+
+#+begin_src emacs-lisp
+(cond
+ ((equal (string-trim (shell-command-to-string "hostname")) "mac-mini.local")
+  (my-set-fonts
+   '((fixed . (:family "PragmataPro" :height 180))
+     (variable . (:family "Helvetica" :height 200)))))
+ (t (my-set-fonts
+     '((fixed . (:family "PragmataPro" :height 160))
+       (variable . ;; (:family "Atkinson Hyperlegible" :height 190)
+                 (:family "Charter" :height 190))))))
+#+end_src
+
+On <2023-09-30 Sat> I returned back to PragmataPro font (16pt) from
+N57 Monospace.
+
+On <2024-10-05 Sat> I configured Atkinson Hyperlegible font for
+variable pitch fonts.
+
+* Working with files
+#+begin_src emacs-lisp
+(define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
+
+(use-package recentf
+  :config
+  (recentf-mode 1)
+  (setq
+   create-lockfiles nil
+   recentf-max-menu-items 20
+   recentf-max-saved-items 1000))
+
+(defun my-open-file-in-external-app (file)
+  "Opens FILE using `open` shell command."
+  (interactive "fFile: ")
+  (shell-command (format "open \"%s\"" (file-truename file))))
+
+(defun delete-visited-file (buffer-name)
+  "Delete the file visited by the buffer named BUFFER-NAME."
+  (interactive "bDelete file visited by buffer ")
+  (let* ((buffer (get-buffer buffer-name))
+         (filename (buffer-file-name buffer)))
+    (when buffer
+      (when (and filename
+                 (file-exists-p filename))
+        (delete-file filename))
+      (kill-buffer buffer))))
+
+(defun find-file-as-root ()
+  "Like `ido-find-file, but automatically edit the file with
+root-privileges (using tramp/sudo), if the file is not writable by
+user.
+URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-more.html"
+  (interactive)
+  (let ((file (ido-read-file-name "Edit as root: ")))
+    (unless (file-writable-p file)
+      (setq file (concat "/sudo::" file)))
+    (find-file file)))
+#+end_src
+
+* Project management
+#+begin_src emacs-lisp
+(setq project-vc-extra-root-markers '("go.mod" ".project"))
+#+end_src
+
+* Completions
+Starting with Emacs 28 <fido-vertical-mode> is available, so it
+provides built-in vertical selection mechanism, similar to Vertico.
+
+There's a catch with Dired - to select the current directory, use
+{C-d}, or the directory under cursor will be selected.
+
+#+begin_src emacs-lisp
+(ido-mode -1)
+(setq ido-everywhere t
+      ido-enable-flex-matching t)
+
+(fido-vertical-mode -1)
+
+(setq completion-auto-help 'visible
+      completion-auto-select 'second-tab)
+
+(setq completion-category-overrides
+      '((buffer
+         (styles initials flex)
+         (cycle . 3))
+        (default
+         (styles basic flex initials)
+         (cycle . 5))))
+
+(setq completion-styles
+      '(basic substring partial-completion flex)
+      ;; '(substring partial-completion flex) ;; it will be configured with orderless
+      )
+
+(setq read-file-name-completion-ignore-case t
+      read-buffer-completion-ignore-case t
+      completion-ignore-case t)
+
+
+#+end_src
+
+* Org Mode
+#+begin_src emacs-lisp
+(use-package org
+  :config
+  (require 'org-tempo)
+  (setq org-src-preserve-indentation t
+        org-edit-src-content-indentation 0))
+#+end_src
+
+* Keybindings
+
+#+begin_src emacs-lisp :results silent
+(define-key isearch-mode-map (kbd "C-;") #'avy-isearch)
+
+(mapc (lambda (kv) (define-key (current-global-map) (kbd (car kv)) (cadr kv)))
+      (list
+       '("s-1" delete-other-windows)
+       '("s-2" split-window-below)
+       '("s-3" split-window-right)
+       '("s-s" save-buffer)
+       '("s-a" mark-whole-buffer)
+       '("s-;" comment-line)
+       '("s-p" backward-paragraph)
+       '("s-n" forward-paragraph)
+       '("s-h" (lambda () (interactive) (other-window -1)))
+       '("s-j" previous-buffer)
+       '("s-k" next-buffer)
+       '("s-l" other-window)
+       '("s-w" delete-window)
+       '("s-o" tab-next)
+       '("s-O" tab-previous)
+       '("s-b" ido-switch-buffer)
+       '("s-r" recentf)
+       '("H-l" global-tab-line-mode)
+       '("H-L" tab-bar-mode)
+       '("M-i" imenu)
+       '("<prior>" backward-page)
+       '("<next>" forward-page)
+       '("s-v" clipboard-yank)
+       '("s-x" clipboard-kill-ring)
+       '("s-c" clipboard-kill-ring-save)
+       ))
+#+end_src
+
+* grep
+#+begin_src emacs-lisp :results silent
+(use-package grep
+  ;;; :commands (grep-find grep)
+  :config
+  (grep-apply-setting 'grep-find-command
+        '("rg --vimgrep '' $(git rev-parse --show-toplevel || echo .)" . 15))
+  (define-key (current-global-map) (kbd "M-s g") #'grep-find)
+  (define-key grep-mode-map (kbd "o") #'compile-goto-error))
+#+end_src
+
+* Footer
+: Local Variables:
+: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "~/.config/emacs.vanilla/init.el")) nil t)
+: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "~/.config/emacs/vanilla-29.el")) nil t)
+: End:
