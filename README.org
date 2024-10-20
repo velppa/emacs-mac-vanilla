@@ -30,17 +30,8 @@ echo "$(date): emacs.vanilla directory recreated"
 
 #+RESULTS:
 : Fri Apr 19 09:40:28 CEST 2024: emacs.vanilla directory recreated
-** Run Emacs without configuration
-#+begin_src sh :results silent
-open -n /Applications/MacPorts/EmacsMac.app --args -Q
-#+end_src
 
-** Run Emacs in a temp directory
-#+begin_src sh :results silent
-open -n /Applications/MacPorts/EmacsMac.app --args --init-directory /tmp/emacs-4321
-#+end_src
-
-* Tangle Elisp from buffer
+* Tangle init.el from this very file
 #+begin_src emacs-lisp :results silent
 (setq vc-follow-symlinks t)
 
