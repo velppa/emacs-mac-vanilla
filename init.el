@@ -4,7 +4,17 @@
 
 (defun my-tangle-elisp-from-buffer (target)
   "Tangle all emacs-lisp source code blocks into TARGET file."
-  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp"))
+  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp")
+  (byte-compile-file target))
+
+(defmacro with-package (package &rest body)
+  "Add PACKAGE to ‘package-selected-packages’, then
+attempt to ‘require’ PACKAGE and, if successful,
+evaluate BODY."
+  (declare (indent 1))
+  `(and (add-to-list 'package-selected-packages ,package)
+        (require ,package nil 'noerror)
+        (progn ,@body)))
 
 (defmacro comment (&rest body)
   "Comment out one or more s-expressions."
@@ -50,7 +60,7 @@
  mac-right-control-modifier 'control
  ns-use-native-fullscreen t)
 
-;;(global-so-long-mode 1)
+;; (global-so-long-mode 1)
 
 (setq
   scroll-margin 0
@@ -81,8 +91,14 @@
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
 
+;; enabling some functions that are considered risky by default
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
   (put c 'disabled nil))
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+(setq require-final-newline t)
+
+(setq sentence-end-double-space nil)
 
 (setq-default line-spacing 0)
 (set-fontset-font "fontset-default" 'cyrillic "Helvetica")
@@ -109,15 +125,19 @@
     (apply #'set-face-attribute 'fixed-pitch nil fixed)
     (apply #'set-face-attribute 'variable-pitch nil variable)))
 
-(cond
- ((equal (string-trim (shell-command-to-string "hostname")) "mac-mini.local")
-  (my-set-fonts
-   '((fixed . (:family "PragmataPro" :height 180))
-     (variable . (:family "Helvetica" :height 200)))))
- (t (my-set-fonts
+(let ((hostname (string-trim (shell-command-to-string "hostname"))))
+  (cond
+   ((equal hostname "mac-mini.local")
+    (my-set-fonts
+     '((fixed . (:family "PragmataPro" :height 180))
+       (variable . (:family "Helvetica" :height 200)))))
+   ((equal hostname "pavels-m1.local")
+    (my-set-fonts
      '((fixed . (:family "PragmataPro" :height 160))
-       (variable . ;; (:family "Atkinson Hyperlegible" :height 190)
-                 (:family "Charter" :height 190))))))
+       (variable . (:family "Atkinson Hyperlegible" :height 190)))))
+   (t (my-set-fonts
+       '((fixed . (:family "PragmataPro" :height 160))
+         (variable . (:family "Charter" :height 190)))))))
 
 (define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
 
@@ -190,10 +210,9 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
   (setq org-src-preserve-indentation t
         org-edit-src-content-indentation 0))
 
-(define-key isearch-mode-map (kbd "C-;") #'avy-isearch)
-
-(mapc (lambda (kv) (define-key (current-global-map) (kbd (car kv)) (cadr kv)))
+(mapc (lambda (kv) (keymap-global-set (car kv) (cadr kv)))
       (list
+       '("C-x b" ibuffer)
        '("s-1" delete-other-windows)
        '("s-2" split-window-below)
        '("s-3" split-window-right)
@@ -213,13 +232,12 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
        '("s-r" recentf)
        '("H-l" global-tab-line-mode)
        '("H-L" tab-bar-mode)
-       '("M-i" imenu)
+       '("M-o" other-window)
        '("<prior>" backward-page)
        '("<next>" forward-page)
        '("s-v" clipboard-yank)
        '("s-x" clipboard-kill-ring)
-       '("s-c" clipboard-kill-ring-save)
-       ))
+       '("s-c" clipboard-kill-ring-save)))
 
 (use-package grep
   ;;; :commands (grep-find grep)

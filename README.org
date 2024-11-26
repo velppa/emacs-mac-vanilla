@@ -1,14 +1,15 @@
 :PROPERTIES:
 :ID:       F9BFCD93-FB1A-4EBD-BC89-7B088358E0D4
 :END:
-#+title: Vanilla Emacs 29 Configuration
+#+title: Vanilla Emacs Configuration
 #+startup: overview
 
-This is configuration of vanilla Emacs 29 without external packages.
-It is optimised for users of emacs-mac
-([[https://github.com/railwaycat/homebrew-emacsmacport][railwaycat/homebrew-emacsmacport]]) that adds macOS-specific goodies.
+This is configuration of vanilla Emacs without external packages.  It
+is optimised for users of emacs-mac ([[https://github.com/railwaycat/homebrew-emacsmacport][railwaycat/homebrew-emacsmacport]])
+that adds macOS-specific goodies.  The configuration is useful to
+start using Emacs from scratch having sane defaults.
 
-It's useful to start using Emacs from scratch having sane defaults.
+As of <2024-11-25 Mon> the target Emacs version is Emacs 29.
 
 * Launch Emacs with this configuration
 The idea is to tangle Emacs Lisp source code blocks into init.el file
@@ -39,18 +40,32 @@ echo "$(date): emacs.vanilla directory recreated"
 
 (defun my-tangle-elisp-from-buffer (target)
   "Tangle all emacs-lisp source code blocks into TARGET file."
-  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp"))
+  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp")
+  (byte-compile-file target))
 #+end_src
-
 
 #+begin_src emacs-lisp :tangle no
 (my-tangle-elisp-from-buffer "~/.config/emacs.vanilla/init.el")
 (my-tangle-elisp-from-buffer "init.el")
 #+end_src
 
-* Packages
+* with-package macro
+On [2022-08-09 Tue] I found =with-package= macro here [[https://git.sr.ht/~chambln/dots/tree/master/item/pkgs/emacs/.emacs.d/init.el][~chambln/dots:
+pkgs/emacs/.emacs.d/init.el]] from [[https://www.reddit.com/r/emacs/comments/whoyz0/comment/ij7obas/?utm_source=reddit&utm_medium=web2x&context=3][the comment on Reddit]].  I use it
+instead of =use-package= but gradually migrate back to =use-package=.
 
-* Comment macro
+#+begin_src emacs-lisp :results silent
+(defmacro with-package (package &rest body)
+  "Add PACKAGE to ‘package-selected-packages’, then
+attempt to ‘require’ PACKAGE and, if successful,
+evaluate BODY."
+  (declare (indent 1))
+  `(and (add-to-list 'package-selected-packages ,package)
+        (require ,package nil 'noerror)
+        (progn ,@body)))
+#+end_src
+
+* comment macro
 #+begin_src emacs-lisp
 (defmacro comment (&rest body)
   "Comment out one or more s-expressions."
@@ -88,8 +103,8 @@ echo "$(date): emacs.vanilla directory recreated"
 
 #+end_src
 
-* Advising `load-theme'
-[[https://www.reddit.com/r/emacs/comments/1bt41m1/why_doesnt_this_piece_of_adviceadd_code_work/][Why doesn't this piece of advice-add code work? : r/emacs]]
+* Advising load-theme
+- [[https://www.reddit.com/r/emacs/comments/1bt41m1/why_doesnt_this_piece_of_adviceadd_code_work/][Why doesn't this piece of advice-add code work? : r/emacs]]
 
 #+begin_src emacs-lisp :results silent
 (defun my-disable-all-themes (&rest _)
@@ -111,7 +126,7 @@ echo "$(date): emacs.vanilla directory recreated"
 
 * Better defaults
 #+begin_src emacs-lisp
-;;(global-so-long-mode 1)
+;; (global-so-long-mode 1)
 
 (setq
   scroll-margin 0
@@ -142,9 +157,14 @@ echo "$(date): emacs.vanilla directory recreated"
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
 
+;; enabling some functions that are considered risky by default
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
   (put c 'disabled nil))
 
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+(setq require-final-newline t)
+
+(setq sentence-end-double-space nil)
 #+end_src
 
 * Font
@@ -179,15 +199,19 @@ echo "$(date): emacs.vanilla directory recreated"
 Setting font depending on the machine I'm on:
 
 #+begin_src emacs-lisp
-(cond
- ((equal (string-trim (shell-command-to-string "hostname")) "mac-mini.local")
-  (my-set-fonts
-   '((fixed . (:family "PragmataPro" :height 180))
-     (variable . (:family "Helvetica" :height 200)))))
- (t (my-set-fonts
+(let ((hostname (string-trim (shell-command-to-string "hostname"))))
+  (cond
+   ((equal hostname "mac-mini.local")
+    (my-set-fonts
+     '((fixed . (:family "PragmataPro" :height 180))
+       (variable . (:family "Helvetica" :height 200)))))
+   ((equal hostname "pavels-m1.local")
+    (my-set-fonts
      '((fixed . (:family "PragmataPro" :height 160))
-       (variable . ;; (:family "Atkinson Hyperlegible" :height 190)
-                 (:family "Charter" :height 190))))))
+       (variable . (:family "Atkinson Hyperlegible" :height 190)))))
+   (t (my-set-fonts
+       '((fixed . (:family "PragmataPro" :height 160))
+         (variable . (:family "Charter" :height 190)))))))
 #+end_src
 
 On <2023-09-30 Sat> I returned back to PragmataPro font (16pt) from
@@ -290,10 +314,9 @@ There's a catch with Dired - to select the current directory, use
 * Keybindings
 
 #+begin_src emacs-lisp :results silent
-(define-key isearch-mode-map (kbd "C-;") #'avy-isearch)
-
-(mapc (lambda (kv) (define-key (current-global-map) (kbd (car kv)) (cadr kv)))
+(mapc (lambda (kv) (keymap-global-set (car kv) (cadr kv)))
       (list
+       '("C-x b" ibuffer)
        '("s-1" delete-other-windows)
        '("s-2" split-window-below)
        '("s-3" split-window-right)
@@ -313,13 +336,12 @@ There's a catch with Dired - to select the current directory, use
        '("s-r" recentf)
        '("H-l" global-tab-line-mode)
        '("H-L" tab-bar-mode)
-       '("M-i" imenu)
+       '("M-o" other-window)
        '("<prior>" backward-page)
        '("<next>" forward-page)
        '("s-v" clipboard-yank)
        '("s-x" clipboard-kill-ring)
-       '("s-c" clipboard-kill-ring-save)
-       ))
+       '("s-c" clipboard-kill-ring-save)))
 #+end_src
 
 * grep
@@ -335,6 +357,5 @@ There's a catch with Dired - to select the current directory, use
 
 * Footer
 : Local Variables:
-: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "~/.config/emacs.vanilla/init.el")) nil t)
-: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "~/.config/emacs/vanilla-29.el")) nil t)
+: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "init.el")) nil t)
 : End:
