@@ -35,7 +35,7 @@ evaluate BODY."
 (add-to-list 'safe-local-variable-values
 	     '(org-roam-db-location . "~/.config/emacs/org-roam.db"))
 
-(let ((f (file-name-concat user-emacs-directory "custom.el")))
+(let ((f (file-truename (file-name-concat user-emacs-directory "custom.el"))))
   (setq custom-file f)
   (unless (file-exists-p f)
     (shell-command (format "touch \"%s\"" f)))
@@ -52,14 +52,6 @@ evaluate BODY."
 
 (advice-add 'load-theme :before 'my-disable-all-themes)
 
-(setq
- mac-command-modifier 'super
- mac-option-modifier 'meta
- mac-right-option-modifier 'hyper
- mac-control-modifier 'control
- mac-right-control-modifier 'control
- ns-use-native-fullscreen t)
-
 ;; (global-so-long-mode 1)
 
 (setq
@@ -71,25 +63,24 @@ evaluate BODY."
   scroll-preserve-screen-position t
   mouse-wheel-follow-mouse t
   mouse-wheel-scroll-amount '(1 ((shift) . 1))
-  require-final-newline t)
-
-(setq-default
-  auto-save-default nil
-  make-backup-files nil
-  delete-by-moving-to-trash t
-  indent-tabs-mode nil
-  inhibit-startup-message nil
-  inhibit-startup-screen nil
-  cursor-in-non-selected-windows nil
-  echo-keystrokes 0.01
-  help-window-select t
-  large-file-warning-threshold 10000000
-  use-short-answers t
-  next-error-message-highlight t
-  recenter-positions '(top middle bottom))
+  require-final-newline t
+  use-short-answers t)
 
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
+;; (tool-bar-mode -1) ;; needs to disabled in init.el
+
+;; macOS-specific
+(setq
+ mac-command-modifier 'super
+ mac-option-modifier 'meta
+ mac-right-option-modifier 'hyper
+ mac-control-modifier 'control
+ mac-right-control-modifier 'control
+ ns-use-native-fullscreen t)
+
+(setq select-enable-clipboard nil
+      x-select-enable-clipboard nil)
 
 ;; enabling some functions that are considered risky by default
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
@@ -125,19 +116,24 @@ evaluate BODY."
     (apply #'set-face-attribute 'fixed-pitch nil fixed)
     (apply #'set-face-attribute 'variable-pitch nil variable)))
 
-(let ((hostname (string-trim (shell-command-to-string "hostname"))))
+;; Setting font depending on the machine
+(let ((machine-name (string-trim (shell-command-to-string "hostname"))))
   (cond
-   ((equal hostname "mac-mini.local")
+   ((equal machine-name "mac-mini.local")
     (my-set-fonts
      '((fixed . (:family "PragmataPro" :height 180))
        (variable . (:family "Helvetica" :height 200)))))
-   ((equal hostname "pavels-m1.local")
+   ((equal machine-name "mini.local")
     (my-set-fonts
-     '((fixed . (:family "PragmataPro" :height 160))
-       (variable . (:family "Atkinson Hyperlegible" :height 190)))))
+     '((fixed . (:family "PragmataPro" :height 190))
+       (variable . (:family "Atkinson Hyperlegible" :height 240)))))
    (t (my-set-fonts
        '((fixed . (:family "PragmataPro" :height 160))
-         (variable . (:family "Charter" :height 190)))))))
+         (variable .
+          (:family "Atkinson Hyperlegible" :height 190)
+          ;;(:family "Charter" :height 190)
+          ;;(:family "Helvetica" :height 190)
+          ))))))
 
 (define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
 
@@ -175,6 +171,30 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
     (unless (file-writable-p file)
       (setq file (concat "/sudo::" file)))
     (find-file file)))
+
+(defun kill-buffer-dwim ()
+  "Kills current buffer without prompt, with C-u it prompts for buffer to kill."
+  (interactive)
+  (if (equal current-prefix-arg nil)
+    (kill-current-buffer)
+    (call-interactively 'kill-buffer)))
+
+(keymap-global-set "C-x k" #'kill-buffer-dwim)
+(keymap-global-set "C-x C-b" #'ibuffer)
+
+(defun display-line-numbers-toggle ()
+  "Toggle displaying line number in the buffer."
+  (interactive)
+  (if (eq display-line-numbers 'relative)
+      (setq display-line-numbers 'absolute)
+    (if (eq display-line-numbers 'absolute)
+        (setq display-line-numbers nil)
+      (setq display-line-numbers 'relative))))
+
+(keymap-global-set "C-c N" #'display-line-numbers-toggle)
+
+(add-hook 'before-save-hook #'delete-trailing-whitespace)
+(setq require-final-newline t)
 
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 
