@@ -1,11 +1,13 @@
 :PROPERTIES:
 :ID:       F9BFCD93-FB1A-4EBD-BC89-7B088358E0D4
 :END:
-#+title: Vanilla Emacs 29 Configuration
+#+title: Vanilla Emacs Configuration
 #+startup: overview
 
-This is configuration of vanilla Emacs 29 without external packages.
-It is optimised for users of emacs-mac
+This is configuration of vanilla Emacs without external packages.
+As of <2024-11-19 Tue> the target version is Emacs 29.
+
+The configuration is optimised for users of emacs-mac
 ([[https://github.com/railwaycat/homebrew-emacsmacport][railwaycat/homebrew-emacsmacport]]) that adds macOS-specific goodies.
 
 It's useful to start using Emacs from scratch having sane defaults.
@@ -48,8 +50,6 @@ echo "$(date): emacs.vanilla directory recreated"
 (my-tangle-elisp-from-buffer "init.el")
 #+end_src
 
-* Packages
-
 * Comment macro
 #+begin_src emacs-lisp
 (defmacro comment (&rest body)
@@ -74,7 +74,7 @@ echo "$(date): emacs.vanilla directory recreated"
 (add-to-list 'safe-local-variable-values
 	     '(org-roam-db-location . "~/.config/emacs/org-roam.db"))
 
-(let ((f (file-name-concat user-emacs-directory "custom.el")))
+(let ((f (file-truename (file-name-concat user-emacs-directory "custom.el"))))
   (setq custom-file f)
   (unless (file-exists-p f)
     (shell-command (format "touch \"%s\"" f)))
@@ -86,27 +86,10 @@ echo "$(date): emacs.vanilla directory recreated"
 (define-key (current-global-map) (kbd "H-l") #'global-tab-line-mode)
 (define-key (current-global-map) (kbd "H-L") #'tab-bar-mode)
 
-#+end_src
-
-* Advising `load-theme'
-[[https://www.reddit.com/r/emacs/comments/1bt41m1/why_doesnt_this_piece_of_adviceadd_code_work/][Why doesn't this piece of advice-add code work? : r/emacs]]
-
-#+begin_src emacs-lisp :results silent
 (defun my-disable-all-themes (&rest _)
     (mapcar #'disable-theme custom-enabled-themes))
 
 (advice-add 'load-theme :before 'my-disable-all-themes)
-#+end_src
-
-* macOS specific
-#+begin_src emacs-lisp
-(setq
- mac-command-modifier 'super
- mac-option-modifier 'meta
- mac-right-option-modifier 'hyper
- mac-control-modifier 'control
- mac-right-control-modifier 'control
- ns-use-native-fullscreen t)
 #+end_src
 
 * Better defaults
@@ -122,29 +105,27 @@ echo "$(date): emacs.vanilla directory recreated"
   scroll-preserve-screen-position t
   mouse-wheel-follow-mouse t
   mouse-wheel-scroll-amount '(1 ((shift) . 1))
-  require-final-newline t)
-
-(setq-default
-  auto-save-default nil
-  make-backup-files nil
-  delete-by-moving-to-trash t
-  indent-tabs-mode nil
-  inhibit-startup-message nil
-  inhibit-startup-screen nil
-  cursor-in-non-selected-windows nil
-  echo-keystrokes 0.01
-  help-window-select t
-  large-file-warning-threshold 10000000
-  use-short-answers t
-  next-error-message-highlight t
-  recenter-positions '(top middle bottom))
+  require-final-newline t
+  use-short-answers t)
 
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
+;; (tool-bar-mode -1) ;; needs to disabled in init.el
+
+;; macOS-specific
+(setq
+ mac-command-modifier 'super
+ mac-option-modifier 'meta
+ mac-right-option-modifier 'hyper
+ mac-control-modifier 'control
+ mac-right-control-modifier 'control
+ ns-use-native-fullscreen t)
+
+(setq select-enable-clipboard nil
+      x-select-enable-clipboard nil)
 
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
   (put c 'disabled nil))
-
 #+end_src
 
 * Font
@@ -179,22 +160,32 @@ echo "$(date): emacs.vanilla directory recreated"
 Setting font depending on the machine I'm on:
 
 #+begin_src emacs-lisp
-(cond
- ((equal (string-trim (shell-command-to-string "hostname")) "mac-mini.local")
-  (my-set-fonts
-   '((fixed . (:family "PragmataPro" :height 180))
-     (variable . (:family "Helvetica" :height 200)))))
- (t (my-set-fonts
-     '((fixed . (:family "PragmataPro" :height 160))
-       (variable . ;; (:family "Atkinson Hyperlegible" :height 190)
-                 (:family "Charter" :height 190))))))
+(let ((machine-name (string-trim (shell-command-to-string "hostname"))))
+  (cond
+   ((equal machine-name "mac-mini.local")
+    (my-set-fonts
+     '((fixed . (:family "PragmataPro" :height 180))
+       (variable . (:family "Helvetica" :height 200)))))
+   ((equal machine-name "mini.local")
+    (my-set-fonts
+     '((fixed . (:family "PragmataPro" :height 190))
+       (variable . (:family "Atkinson Hyperlegible" :height 240)))))
+   (t (my-set-fonts
+       '((fixed . (:family "PragmataPro" :height 160))
+         (variable .
+          (:family "Atkinson Hyperlegible" :height 190)
+          ;;(:family "Charter" :height 190)
+          ;;(:family "Helvetica" :height 190)
+          ))))))
 #+end_src
+
+#+RESULTS:
 
 On <2023-09-30 Sat> I returned back to PragmataPro font (16pt) from
 N57 Monospace.
 
 On <2024-10-05 Sat> I configured Atkinson Hyperlegible font for
-variable pitch fonts.
+variable pitch fonts.  It's a Sans font.
 
 * Working with files
 #+begin_src emacs-lisp
@@ -234,6 +225,48 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
     (unless (file-writable-p file)
       (setq file (concat "/sudo::" file)))
     (find-file file)))
+#+end_src
+
+* Working with buffers
+I'm using vanilla functionality to deal with buffers, previously I
+tried Bufler, [[https://github.com/jrosdahl/iflipb][iflipb.el]] and Frog Jump Buffer packages.
+
+Use {M-x ibuffer RET} ([[https://www.emacswiki.org/emacs/IbufferMode][EmacsWiki: Ibuffer Mode]]) for a better
+interface to editing the list of buffers.
+
+Use {M-x follow-mode RET} for two-paged reading of long buffers.
+See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple columns one buffer | 9to5Answer]].
+
+#+begin_src emacs-lisp :results silent
+(defun kill-buffer-dwim ()
+  "Kills current buffer without prompt, with C-u it prompts for buffer to kill."
+  (interactive)
+  (if (equal current-prefix-arg nil)
+    (kill-current-buffer)
+    (call-interactively 'kill-buffer)))
+
+(keymap-global-set "C-x k" #'kill-buffer-dwim)
+(keymap-global-set "C-x C-b" #'ibuffer)
+#+end_src
+
+** Line numbers
+#+begin_src emacs-lisp :results silent
+(defun display-line-numbers-toggle ()
+  "Toggle displaying line number in the buffer."
+  (interactive)
+  (if (eq display-line-numbers 'relative)
+      (setq display-line-numbers 'absolute)
+    (if (eq display-line-numbers 'absolute)
+        (setq display-line-numbers nil)
+      (setq display-line-numbers 'relative))))
+
+(keymap-global-set "C-c N" #'display-line-numbers-toggle)
+#+end_src
+
+* Text
+#+begin_src emacs-lisp :results silent
+(add-hook 'before-save-hook #'delete-trailing-whitespace)
+(setq require-final-newline t)
 #+end_src
 
 * Project management
@@ -335,6 +368,5 @@ There's a catch with Dired - to select the current directory, use
 
 * Footer
 : Local Variables:
-: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "~/.config/emacs.vanilla/init.el")) nil t)
-: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "~/.config/emacs/vanilla-29.el")) nil t)
+: eval: (add-hook 'after-save-hook (lambda () (my-tangle-elisp-from-buffer "init.el")) nil t)
 : End:
