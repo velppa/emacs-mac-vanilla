@@ -40,7 +40,7 @@ echo "$(date): emacs.vanilla directory recreated"
 
 (defun my-tangle-elisp-from-buffer (target)
   "Tangle all emacs-lisp source code blocks into TARGET file."
-  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp")
+  (org-babel-tangle-file (buffer-file-name) target (rx (or "emacs-lisp" "elisp")))
   (byte-compile-file target))
 #+end_src
 
@@ -287,6 +287,7 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 #+begin_src emacs-lisp :results silent
 (add-hook 'before-save-hook #'delete-trailing-whitespace)
 (setq require-final-newline t)
+(setq-default indent-tabs-mode nil)
 #+end_src
 
 * Project management

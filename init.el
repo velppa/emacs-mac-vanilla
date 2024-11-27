@@ -4,7 +4,7 @@
 
 (defun my-tangle-elisp-from-buffer (target)
   "Tangle all emacs-lisp source code blocks into TARGET file."
-  (org-babel-tangle-file (buffer-file-name) target "emacs-lisp")
+  (org-babel-tangle-file (buffer-file-name) target (rx (or "emacs-lisp" "elisp")))
   (byte-compile-file target))
 
 (defmacro with-package (package &rest body)
@@ -195,6 +195,7 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
 
 (add-hook 'before-save-hook #'delete-trailing-whitespace)
 (setq require-final-newline t)
+(setq-default indent-tabs-mode nil)
 
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 
