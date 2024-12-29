@@ -66,6 +66,8 @@ evaluate BODY."
   require-final-newline t
   use-short-answers t)
 
+(setq large-file-warning-threshold 100000000) ; Set to 100 MB
+
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
 ;; (tool-bar-mode -1) ;; needs to disabled in init.el
@@ -79,8 +81,7 @@ evaluate BODY."
  mac-right-control-modifier 'control
  ns-use-native-fullscreen t)
 
-(setq select-enable-clipboard nil
-      x-select-enable-clipboard nil)
+(setq select-enable-clipboard nil)
 
 ;; enabling some functions that are considered risky by default
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
