@@ -54,6 +54,9 @@ evaluate BODY."
 
 ;; (global-so-long-mode 1)
 
+(defvar my-hostname (string-trim (shell-command-to-string "hostname"))
+  "Current hostname")
+
 (setq
   scroll-margin 0
   scroll-step 1
@@ -199,6 +202,7 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
 (add-hook 'before-save-hook #'delete-trailing-whitespace)
 (setq require-final-newline t)
 (setq-default indent-tabs-mode nil)
+(setq-default js-indent-level 2)
 
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 
