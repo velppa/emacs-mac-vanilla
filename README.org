@@ -16,6 +16,12 @@ The idea is to tangle Emacs Lisp source code blocks into init.el file
 and then launch Emacs.
 
 #+begin_src sh :results silent
+open -n /Applications/MacPorts/EmacsMac.app --args -Q
+#+end_src
+
+
+
+#+begin_src sh :results silent
 open -n /Applications/MacPorts/EmacsMac.app --args --init-directory ~/.config/emacs.vanilla
 #+end_src
 
@@ -129,6 +135,8 @@ evaluate BODY."
   require-final-newline t
   use-short-answers t)
 
+(setq indent-tabs-mode nil)
+(setq tab-width 2)
 (setq large-file-warning-threshold 100000000) ; Set to 100 MB
 
 (global-auto-revert-mode t)
@@ -377,13 +385,21 @@ There's a catch with Dired - to select the current directory, use
 
 * grep
 #+begin_src emacs-lisp :results silent
-(use-package grep
+(use-package grep :ensure nil
   ;;; :commands (grep-find grep)
   :config
   (grep-apply-setting 'grep-find-command
         '("rg --vimgrep '' $(git rev-parse --show-toplevel || echo .)" . 15))
   (define-key (current-global-map) (kbd "M-s g") #'grep-find)
   (define-key grep-mode-map (kbd "o") #'compile-goto-error))
+#+end_src
+
+* Code
+** JavaScript
+#+begin_src elisp :results silent
+(use-package js :ensure nil
+  :config
+  (setq js-indent-level 2))
 #+end_src
 
 * Footer

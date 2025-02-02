@@ -66,6 +66,8 @@ evaluate BODY."
   require-final-newline t
   use-short-answers t)
 
+(setq indent-tabs-mode nil)
+(setq tab-width 2)
 (setq large-file-warning-threshold 100000000) ; Set to 100 MB
 
 (global-auto-revert-mode t)
@@ -261,10 +263,14 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
        '("s-x" clipboard-kill-ring)
        '("s-c" clipboard-kill-ring-save)))
 
-(use-package grep
+(use-package grep :ensure nil
   ;;; :commands (grep-find grep)
   :config
   (grep-apply-setting 'grep-find-command
         '("rg --vimgrep '' $(git rev-parse --show-toplevel || echo .)" . 15))
   (define-key (current-global-map) (kbd "M-s g") #'grep-find)
   (define-key grep-mode-map (kbd "o") #'compile-goto-error))
+
+(use-package js :ensure nil
+  :config
+  (setq js-indent-level 2))
