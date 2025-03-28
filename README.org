@@ -16,12 +16,6 @@ The idea is to tangle Emacs Lisp source code blocks into init.el file
 and then launch Emacs.
 
 #+begin_src sh :results silent
-open -n /Applications/MacPorts/EmacsMac.app --args -Q
-#+end_src
-
-
-
-#+begin_src sh :results silent
 open -n /Applications/MacPorts/EmacsMac.app --args --init-directory ~/.config/emacs.vanilla
 #+end_src
 
@@ -38,19 +32,42 @@ echo "$(date): emacs.vanilla directory recreated"
 #+RESULTS:
 : Fri Apr 19 09:40:28 CEST 2024: emacs.vanilla directory recreated
 
+** Launch Emacs without configuration
+#+begin_src sh :results silent
+open -n /Applications/MacPorts/EmacsMac.app --args -Q
+#+end_src
+
+** Vanilla + nano
+On <2025-02-06 Thu> I added nano.el to this repo inspired by [[https://www.reddit.com/r/emacs/comments/1ihp5sk/nano_emacs_minimal_version_in_256_lines/][NANO
+Emacs, minimal version in 256 lines : r/emacs]] post.
+
+#+begin_src sh :results silent
+open -n /Applications/MacPorts/EmacsMac.app --args \
+  --init-directory $(pwd) \
+  -l "$(pwd)/nano.el" --eval "(nano-dark)"
+#+end_src
+
+I had to comment-out macOS-specific configurations that override my
+preference.
+
+* Preamble
+Let's enable lexical binding first.
+#+begin_src elisp :results silent
+;;; init.el --- Vanilla emacs-mac configuration. -*- lexical-binding: t; -*-
+#+end_src
 * Tangle init.el from this very file
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (setq vc-follow-symlinks t)
 
 (require 'org)
 
 (defun my-tangle-elisp-from-buffer (target)
-  "Tangle all emacs-lisp source code blocks into TARGET file."
-  (org-babel-tangle-file (buffer-file-name) target (rx (or "emacs-lisp" "elisp")))
+  "Tangle all elisp source code blocks into TARGET file."
+  (org-babel-tangle-file (buffer-file-name) target (rx (or "elisp" "elisp")))
   (byte-compile-file target))
 #+end_src
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src elisp :tangle no
 (my-tangle-elisp-from-buffer "~/.config/emacs.vanilla/init.el")
 (my-tangle-elisp-from-buffer "init.el")
 #+end_src
@@ -60,7 +77,7 @@ On [2022-08-09 Tue] I found =with-package= macro here [[https://git.sr.ht/~chamb
 pkgs/emacs/.emacs.d/init.el]] from [[https://www.reddit.com/r/emacs/comments/whoyz0/comment/ij7obas/?utm_source=reddit&utm_medium=web2x&context=3][the comment on Reddit]].  I use it
 instead of =use-package= but gradually migrate back to =use-package=.
 
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (defmacro with-package (package &rest body)
   "Add PACKAGE to ‘package-selected-packages’, then
 attempt to ‘require’ PACKAGE and, if successful,
@@ -72,14 +89,14 @@ evaluate BODY."
 #+end_src
 
 * comment macro
-#+begin_src emacs-lisp
-(defmacro comment (&rest body)
+#+begin_src elisp
+(defmacro comment (&rest _)
   "Comment out one or more s-expressions."
   nil)
 #+end_src
 
 * Visuals
-#+begin_src emacs-lisp
+#+begin_src elisp
 (setq native-comp-async-report-warnings-errors 'silent)
 
 ;; (tool-bar-mode -1) ; it loves to be in init.el, not in early-init.el
@@ -112,7 +129,7 @@ evaluate BODY."
 * Advising load-theme
 - [[https://www.reddit.com/r/emacs/comments/1bt41m1/why_doesnt_this_piece_of_adviceadd_code_work/][Why doesn't this piece of advice-add code work? : r/emacs]]
 
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (defun my-disable-all-themes (&rest _)
     (mapcar #'disable-theme custom-enabled-themes))
 
@@ -120,7 +137,7 @@ evaluate BODY."
 #+end_src
 
 * Better defaults
-#+begin_src emacs-lisp
+#+begin_src elisp
 ;; (global-so-long-mode 1)
 
 (defvar my-hostname (string-trim (shell-command-to-string "hostname"))
@@ -168,7 +185,7 @@ evaluate BODY."
 #+end_src
 
 * Font
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (setq-default line-spacing 0)
 (set-fontset-font "fontset-default" 'cyrillic "Helvetica")
 
@@ -206,11 +223,11 @@ evaluate BODY."
      '((fixed . (:family "PragmataPro" :height 190))
        (variable . (:family "Atkinson Hyperlegible" :height 240)))))
    (t (my-set-fonts
-       '((fixed . (:family "PragmataPro" :height 160))
+       '((fixed . (:family "PragmataPro" :height 180))
          (variable .
-          (:family "Atkinson Hyperlegible" :height 190)
-          ;;(:family "Charter" :height 190)
-          ;;(:family "Helvetica" :height 190)
+          ;; (:family "Atkinson Hyperlegible" :height 190)
+          ;; (:family "Charter" :height 190)
+          (:family "Helvetica" :height 210)
           ))))))
 #+end_src
 
@@ -220,7 +237,7 @@ evaluate BODY."
   variable pitch fonts.  It's a Sans font.
 
 * Working with files
-#+begin_src emacs-lisp
+#+begin_src elisp
 (define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
 
 (use-package recentf
@@ -269,7 +286,7 @@ interface to editing the list of buffers.
 Use {M-x follow-mode RET} for two-paged reading of long buffers.
 See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple columns one buffer | 9to5Answer]].
 
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (defun kill-buffer-dwim ()
   "Kills current buffer without prompt, with C-u it prompts for buffer to kill."
   (interactive)
@@ -282,7 +299,7 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 #+end_src
 
 ** Line numbers
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (defun display-line-numbers-toggle ()
   "Toggle displaying line number in the buffer."
   (interactive)
@@ -296,7 +313,7 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 #+end_src
 
 * Text
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (add-hook 'before-save-hook #'delete-trailing-whitespace)
 (setq require-final-newline t)
 (setq-default indent-tabs-mode nil)
@@ -304,7 +321,7 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 #+end_src
 
 * Project management
-#+begin_src emacs-lisp
+#+begin_src elisp
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 #+end_src
 
@@ -315,7 +332,7 @@ provides built-in vertical selection mechanism, similar to Vertico.
 There's a catch with Dired - to select the current directory, use
 {C-d}, or the directory under cursor will be selected.
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 (ido-mode -1)
 (setq ido-everywhere t
       ido-enable-flex-matching t)
@@ -346,7 +363,7 @@ There's a catch with Dired - to select the current directory, use
 #+end_src
 
 * Org Mode
-#+begin_src emacs-lisp
+#+begin_src elisp
 (use-package org
   :config
   (require 'org-tempo)
@@ -356,7 +373,7 @@ There's a catch with Dired - to select the current directory, use
 
 * Keybindings
 
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (mapc (lambda (kv) (keymap-global-set (car kv) (cadr kv)))
       (list
        '("C-x b" ibuffer)
@@ -388,7 +405,7 @@ There's a catch with Dired - to select the current directory, use
 #+end_src
 
 * grep
-#+begin_src emacs-lisp :results silent
+#+begin_src elisp :results silent
 (use-package grep :ensure nil
   ;;; :commands (grep-find grep)
   :config

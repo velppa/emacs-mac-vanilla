@@ -1,10 +1,12 @@
+;;; init.el --- Vanilla emacs-mac configuration. -*- lexical-binding: t; -*-
+
 (setq vc-follow-symlinks t)
 
 (require 'org)
 
 (defun my-tangle-elisp-from-buffer (target)
-  "Tangle all emacs-lisp source code blocks into TARGET file."
-  (org-babel-tangle-file (buffer-file-name) target (rx (or "emacs-lisp" "elisp")))
+  "Tangle all elisp source code blocks into TARGET file."
+  (org-babel-tangle-file (buffer-file-name) target (rx (or "elisp" "elisp")))
   (byte-compile-file target))
 
 (defmacro with-package (package &rest body)
@@ -16,7 +18,7 @@ evaluate BODY."
         (require ,package nil 'noerror)
         (progn ,@body)))
 
-(defmacro comment (&rest body)
+(defmacro comment (&rest _)
   "Comment out one or more s-expressions."
   nil)
 
@@ -134,11 +136,11 @@ evaluate BODY."
      '((fixed . (:family "PragmataPro" :height 190))
        (variable . (:family "Atkinson Hyperlegible" :height 240)))))
    (t (my-set-fonts
-       '((fixed . (:family "PragmataPro" :height 160))
+       '((fixed . (:family "PragmataPro" :height 180))
          (variable .
-          (:family "Atkinson Hyperlegible" :height 190)
-          ;;(:family "Charter" :height 190)
-          ;;(:family "Helvetica" :height 190)
+          ;; (:family "Atkinson Hyperlegible" :height 190)
+          ;; (:family "Charter" :height 190)
+          (:family "Helvetica" :height 210)
           ))))))
 
 (define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
