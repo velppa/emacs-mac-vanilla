@@ -16,7 +16,7 @@ The idea is to tangle Emacs Lisp source code blocks into init.el file
 and then launch Emacs.
 
 #+begin_src sh :results silent
-open -n /Applications/MacPorts/EmacsMac.app --args --init-directory ~/.config/emacs.vanilla
+open -n /Applications/Emacs.app --args --init-directory ~/.config/emacs.vanilla
 #+end_src
 
 #+caption: recreate emacs.vanilla directory
@@ -34,7 +34,7 @@ echo "$(date): emacs.vanilla directory recreated"
 
 ** Launch Emacs without configuration
 #+begin_src sh :results silent
-open -n /Applications/MacPorts/EmacsMac.app --args -Q
+open -n /Applications/Emacs.app --args -Q
 #+end_src
 
 ** Vanilla + nano
@@ -385,10 +385,10 @@ There's a catch with Dired - to select the current directory, use
        '("s-;" comment-line)
        '("s-p" backward-paragraph)
        '("s-n" forward-paragraph)
-       '("s-h" (lambda () (interactive) (other-window -1)))
-       '("s-j" previous-buffer)
-       '("s-k" next-buffer)
-       '("s-l" other-window)
+       '("s-h" previous-buffer)
+       '("s-j" mode-line-other-buffer)
+       '("s-k" mode-line-other-buffer)
+       '("s-l" next-buffer)
        '("s-w" delete-window)
        '("s-o" tab-next)
        '("s-O" tab-previous)
