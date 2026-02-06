@@ -9,15 +9,6 @@
   (org-babel-tangle-file (buffer-file-name) target (rx (or "elisp" "elisp")))
   (byte-compile-file target))
 
-(defmacro with-package (package &rest body)
-  "Add PACKAGE to ‘package-selected-packages’, then
-attempt to ‘require’ PACKAGE and, if successful,
-evaluate BODY."
-  (declare (indent 1))
-  `(and (add-to-list 'package-selected-packages ,package)
-        (require ,package nil 'noerror)
-        (progn ,@body)))
-
 (defmacro comment (&rest _)
   "Comment out one or more s-expressions."
   nil)
@@ -85,8 +76,9 @@ evaluate BODY."
  mac-option-modifier 'meta
  mac-right-option-modifier 'hyper
  mac-control-modifier 'control
- mac-right-control-modifier 'control
- ns-use-native-fullscreen t)
+ mac-right-control-modifier 'control)
+
+(setq ns-use-native-fullscreen t)
 
 (setq select-enable-clipboard nil)
 
@@ -141,6 +133,7 @@ evaluate BODY."
           ;; (:family "Atkinson Hyperlegible" :height 190)
           ;; (:family "Charter" :height 190)
           (:family "Helvetica" :height 210)
+          ;;
           ))))))
 
 (define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)

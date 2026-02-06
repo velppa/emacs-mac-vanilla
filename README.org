@@ -1,6 +1,3 @@
-:PROPERTIES:
-:ID:       F9BFCD93-FB1A-4EBD-BC89-7B088358E0D4
-:END:
 #+title: Vanilla Emacs Configuration
 #+startup: overview
 
@@ -21,16 +18,14 @@ open -n /Applications/Emacs.app --args --init-directory ~/.config/emacs.vanilla
 
 #+caption: recreate emacs.vanilla directory
 #+begin_src sh
-cd ~/.config
-rm -rf emacs.vanilla
-mkdir emacs.vanilla
-cp ~/Documents/Projects/Dotfiles/early-init.el emacs/vanilla-29.el emacs.vanilla
-touch emacs.vanilla/init.el
-echo "$(date): emacs.vanilla directory recreated"
+rm -rf ~/.config/emacs.vanilla
+mkdir ~/.config/emacs.vanilla
+cp init.el ~/.config/emacs.vanilla/init.el
+echo "$(date): ~/.config/emacs.vanilla directory recreated"
 #+end_src
 
 #+RESULTS:
-: Fri Apr 19 09:40:28 CEST 2024: emacs.vanilla directory recreated
+: Fri Feb  6 10:46:37 CET 2026: ~/.config/emacs.vanilla directory recreated
 
 ** Launch Emacs without configuration
 #+begin_src sh :results silent
@@ -77,7 +72,7 @@ On [2022-08-09 Tue] I found =with-package= macro here [[https://git.sr.ht/~chamb
 pkgs/emacs/.emacs.d/init.el]] from [[https://www.reddit.com/r/emacs/comments/whoyz0/comment/ij7obas/?utm_source=reddit&utm_medium=web2x&context=3][the comment on Reddit]].  I use it
 instead of =use-package= but gradually migrate back to =use-package=.
 
-#+begin_src elisp :results silent
+#+begin_src elisp :results silent :tangle no
 (defmacro with-package (package &rest body)
   "Add PACKAGE to ‘package-selected-packages’, then
 attempt to ‘require’ PACKAGE and, if successful,
@@ -169,8 +164,9 @@ evaluate BODY."
  mac-option-modifier 'meta
  mac-right-option-modifier 'hyper
  mac-control-modifier 'control
- mac-right-control-modifier 'control
- ns-use-native-fullscreen t)
+ mac-right-control-modifier 'control)
+
+(setq ns-use-native-fullscreen t)
 
 (setq select-enable-clipboard nil)
 
@@ -228,6 +224,7 @@ evaluate BODY."
           ;; (:family "Atkinson Hyperlegible" :height 190)
           ;; (:family "Charter" :height 190)
           (:family "Helvetica" :height 210)
+          ;;
           ))))))
 #+end_src
 
