@@ -25,7 +25,7 @@ echo "$(date): ~/.config/emacs.vanilla directory recreated"
 #+end_src
 
 #+RESULTS:
-: Fri Feb  6 10:46:37 CET 2026: ~/.config/emacs.vanilla directory recreated
+: Fri Feb  6 11:42:33 CET 2026: ~/.config/emacs.vanilla directory recreated
 
 ** Launch Emacs without configuration
 #+begin_src sh :results silent
@@ -183,7 +183,8 @@ evaluate BODY."
 * Font
 #+begin_src elisp :results silent
 (setq-default line-spacing 0)
-(set-fontset-font "fontset-default" 'cyrillic "Helvetica")
+(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
+(set-fontset-font t 'symbol (font-spec :family "PragmataPro")) ;; to display unicode symbols properly
 
 (require 'subr-x)
 
@@ -371,34 +372,36 @@ There's a catch with Dired - to select the current directory, use
 * Keybindings
 
 #+begin_src elisp :results silent
-(mapc (lambda (kv) (keymap-global-set (car kv) (cadr kv)))
-      (list
-       '("C-x b" ibuffer)
-       '("s-1" delete-other-windows)
-       '("s-2" split-window-below)
-       '("s-3" split-window-right)
-       '("s-s" save-buffer)
-       '("s-a" mark-whole-buffer)
-       '("s-;" comment-line)
-       '("s-p" backward-paragraph)
-       '("s-n" forward-paragraph)
-       '("s-h" previous-buffer)
-       '("s-j" mode-line-other-buffer)
-       '("s-k" mode-line-other-buffer)
-       '("s-l" next-buffer)
-       '("s-w" delete-window)
-       '("s-o" tab-next)
-       '("s-O" tab-previous)
-       '("s-b" ido-switch-buffer)
-       '("s-r" recentf)
-       '("H-l" global-tab-line-mode)
-       '("H-L" tab-bar-mode)
-       '("M-o" other-window)
-       '("<prior>" backward-page)
-       '("<next>" forward-page)
-       '("s-v" clipboard-yank)
-       '("s-x" clipboard-kill-ring)
-       '("s-c" clipboard-kill-ring-save)))
+(use-package emacs
+  :bind
+  (
+   ("C-x b" . ibuffer)
+   ("s-1" . delete-other-windows)
+   ("s-2" . split-window-below)
+   ("s-3" . split-window-right)
+   ("s-s" . save-buffer)
+   ("s-a" . mark-whole-buffer)
+   ("s-;" . comment-line)
+   ("s-p" . backward-paragraph)
+   ("s-n" . forward-paragraph)
+   ("s-h" . previous-buffer)
+   ("s-j" . switch-to-prev-buffer)
+   ("s-k" . mode-line-other-buffer)
+   ("s-l" . next-buffer)
+   ("s-w" . delete-window)
+   ("s-o" . tab-next)
+   ("s-O" . tab-previous)
+   ("s-b" . ido-switch-buffer)
+   ("s-r" . recentf)
+   ("H-l" . global-tab-line-mode)
+   ("H-L" . tab-bar-mode)
+   ("M-o" . other-window)
+   ("<prior>" . backward-page)
+   ("<next>" . forward-page)
+   ("C-z" . repeat)
+   ("s-v" . clipboard-yank)
+   ("s-x" . clipboard-kill-ring)
+   ("s-c" . clipboard-kill-ring-save)))
 #+end_src
 
 * grep
