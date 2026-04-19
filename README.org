@@ -1,12 +1,12 @@
 #+title: Vanilla Emacs Configuration
 #+startup: overview
 
-This is configuration of vanilla Emacs without external packages.  It
-is optimised for users of emacs-mac ([[https://github.com/railwaycat/homebrew-emacsmacport][railwaycat/homebrew-emacsmacport]])
-that adds macOS-specific goodies.  The configuration is useful to
-start using Emacs from scratch having sane defaults.
+This is configuration of vanilla Emacs without external packages. It
+is optimised for users of emacs-mac that adds macOS-specific goodies.
+The configuration is useful to start using Emacs from scratch having
+sane defaults.
 
-As of <2024-11-25 Mon> the target Emacs version is Emacs 29.
+As of <2026-04-18 Sat> the target Emacs version is Emacs 30.
 
 * Launch Emacs with this configuration
 The idea is to tangle Emacs Lisp source code blocks into init.el file
@@ -92,13 +92,13 @@ evaluate BODY."
 
 * Visuals
 #+begin_src elisp
-(setq native-comp-async-report-warnings-errors 'silent)
+(setq native-comp-async-report-warnings-errors 'silent
+      frame-resize-pixelwise t
+      frame-title-format "Emacs Vanilla – %b")
 
 ;; (tool-bar-mode -1) ; it loves to be in init.el, not in early-init.el
 (scroll-bar-mode -1)
 (fringe-mode '(5 . 5))
-(setq frame-resize-pixelwise t)
-(setq frame-title-format "Emacs Vanilla – %b")
 
 ;; enable .dir-locals.el
 ;; (add-to-list 'safe-local-variable-values
@@ -116,9 +116,6 @@ evaluate BODY."
 (setq-default cursor-type 'bar)
 ;; (blink-cursor-mode 0)
 
-(define-key (current-global-map) (kbd "H-l") #'global-tab-line-mode)
-(define-key (current-global-map) (kbd "H-L") #'tab-bar-mode)
-
 #+end_src
 
 * Advising load-theme
@@ -135,9 +132,6 @@ evaluate BODY."
 #+begin_src elisp
 ;; (global-so-long-mode 1)
 
-(defvar my-hostname (string-trim (shell-command-to-string "hostname"))
-  "Current hostname")
-
 (setq
   scroll-margin 0
   scroll-step 1
@@ -148,15 +142,12 @@ evaluate BODY."
   mouse-wheel-follow-mouse t
   mouse-wheel-scroll-amount '(1 ((shift) . 1))
   require-final-newline t
-  use-short-answers t)
-
-(setq indent-tabs-mode nil)
-(setq tab-width 2)
-(setq large-file-warning-threshold 100000000) ; Set to 100 MB
+  use-short-answers t
+  tab-width 2
+  large-file-warning-threshold 100000000)
 
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
-;; (tool-bar-mode -1) ;; needs to disabled in init.el
 
 ;; macOS-specific
 (setq
@@ -164,29 +155,19 @@ evaluate BODY."
  mac-option-modifier 'meta
  mac-right-option-modifier 'hyper
  mac-control-modifier 'control
- mac-right-control-modifier 'control)
-
-(setq ns-use-native-fullscreen t)
-
-(setq select-enable-clipboard nil)
+ mac-right-control-modifier 'control
+ ns-use-native-fullscreen t
+ select-enable-clipboard nil)
 
 ;; enabling some functions that are considered risky by default
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
   (put c 'disabled nil))
 
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-(setq require-final-newline t)
-
-(setq sentence-end-double-space nil)
 #+end_src
 
 * Font
 #+begin_src elisp :results silent
 (setq-default line-spacing 0)
-(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
-(set-fontset-font t 'symbol (font-spec :family "PragmataPro")) ;; to display unicode symbols properly
-
-(require 'subr-x)
 
 (defun variable-pitch-mode-on ()
   "Enable `variable-pitch-mode'."
@@ -224,9 +205,11 @@ evaluate BODY."
          (variable .
           ;; (:family "Atkinson Hyperlegible" :height 190)
           ;; (:family "Charter" :height 190)
-          (:family "Helvetica" :height 210)
-          ;;
-          ))))))
+          (:family "Helvetica" :height 210)))))))
+
+;; see /Users/pavel/Agent/260324--eye-unicode-symbol/plan.org
+(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
+(set-fontset-font t 'symbol (font-spec :family "PragmataPro")) ;; to display unicode symbols properly
 #+end_src
 
 - On <2023-09-30 Sat> I returned back to PragmataPro font (16pt) from
@@ -234,11 +217,13 @@ evaluate BODY."
 - On <2024-10-05 Sat> I configured Atkinson Hyperlegible font for
   variable pitch fonts.  It's a Sans font.
 
-* Working with files
+* Files
 #+begin_src elisp
-(define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
+(setq make-backup-files nil)
 
-(use-package recentf
+(keymap-global-set "C-x C-f" #'find-file-at-point)
+
+(use-package recentf :ensure nil
   :config
   (recentf-mode 1)
   (setq
@@ -274,7 +259,7 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
     (find-file file)))
 #+end_src
 
-* Working with buffers
+* Buffers
 I'm using vanilla functionality to deal with buffers, previously I
 tried Bufler, [[https://github.com/jrosdahl/iflipb][iflipb.el]] and Frog Jump Buffer packages.
 
@@ -293,7 +278,6 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
     (call-interactively 'kill-buffer)))
 
 (keymap-global-set "C-x k" #'kill-buffer-dwim)
-(keymap-global-set "C-x C-b" #'ibuffer)
 #+end_src
 
 ** Line numbers
@@ -313,9 +297,8 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 * Text
 #+begin_src elisp :results silent
 (add-hook 'before-save-hook #'delete-trailing-whitespace)
-(setq require-final-newline t)
 (setq-default indent-tabs-mode nil)
-(setq-default js-indent-level 2)
+(setq sentence-end-double-space nil)
 #+end_src
 
 * Project management
@@ -324,18 +307,25 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 #+end_src
 
 * Completions
-Starting with Emacs 28 <fido-vertical-mode> is available, so it
+Starting with Emacs 28 fido-vertical-mode is available, so it
 provides built-in vertical selection mechanism, similar to Vertico.
 
 There's a catch with Dired - to select the current directory, use
 {C-d}, or the directory under cursor will be selected.
 
 #+begin_src elisp
-(ido-mode -1)
-(setq ido-everywhere t
-      ido-enable-flex-matching t)
+(comment
+ (use-package ido
+    :config
+    (ido-mode 1)
+    (setq ido-everywhere t
+      ido-enable-flex-matching t)))
 
-(fido-vertical-mode -1)
+(use-package icomplete
+  :config
+    (fido-vertical-mode 1)
+    ;; (icomplete-vertical-mode 1)
+    )
 
 (setq completion-auto-help 'visible
       completion-auto-select 'second-tab)
@@ -348,16 +338,11 @@ There's a catch with Dired - to select the current directory, use
          (styles basic flex initials)
          (cycle . 5))))
 
-(setq completion-styles
-      '(basic substring partial-completion flex)
-      ;; '(substring partial-completion flex) ;; it will be configured with orderless
-      )
+(setq completion-styles '(basic substring partial-completion flex))
 
 (setq read-file-name-completion-ignore-case t
       read-buffer-completion-ignore-case t
       completion-ignore-case t)
-
-
 #+end_src
 
 * Org Mode
@@ -370,12 +355,11 @@ There's a catch with Dired - to select the current directory, use
 #+end_src
 
 * Keybindings
-
 #+begin_src elisp :results silent
 (use-package emacs
   :bind
   (
-   ("C-x b" . ibuffer)
+   ("C-x C-b" . ibuffer)
    ("s-1" . delete-other-windows)
    ("s-2" . split-window-below)
    ("s-3" . split-window-right)
@@ -411,8 +395,8 @@ There's a catch with Dired - to select the current directory, use
   :config
   (grep-apply-setting 'grep-find-command
         '("rg --vimgrep '' $(git rev-parse --show-toplevel || echo .)" . 15))
-  (define-key (current-global-map) (kbd "M-s g") #'grep-find)
-  (define-key grep-mode-map (kbd "o") #'compile-goto-error))
+  (keymap-global-set "M-s g" #'grep-find)
+  (keymap-set grep-mode-map "o" #'compile-goto-error))
 #+end_src
 
 * Code

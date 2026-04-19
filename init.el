@@ -13,13 +13,13 @@
   "Comment out one or more s-expressions."
   nil)
 
-(setq native-comp-async-report-warnings-errors 'silent)
+(setq native-comp-async-report-warnings-errors 'silent
+      frame-resize-pixelwise t
+      frame-title-format "Emacs Vanilla – %b")
 
 ;; (tool-bar-mode -1) ; it loves to be in init.el, not in early-init.el
 (scroll-bar-mode -1)
 (fringe-mode '(5 . 5))
-(setq frame-resize-pixelwise t)
-(setq frame-title-format "Emacs Vanilla – %b")
 
 ;; enable .dir-locals.el
 ;; (add-to-list 'safe-local-variable-values
@@ -37,18 +37,12 @@
 (setq-default cursor-type 'bar)
 ;; (blink-cursor-mode 0)
 
-(define-key (current-global-map) (kbd "H-l") #'global-tab-line-mode)
-(define-key (current-global-map) (kbd "H-L") #'tab-bar-mode)
-
 (defun my-disable-all-themes (&rest _)
     (mapcar #'disable-theme custom-enabled-themes))
 
 (advice-add 'load-theme :before 'my-disable-all-themes)
 
 ;; (global-so-long-mode 1)
-
-(defvar my-hostname (string-trim (shell-command-to-string "hostname"))
-  "Current hostname")
 
 (setq
   scroll-margin 0
@@ -60,15 +54,12 @@
   mouse-wheel-follow-mouse t
   mouse-wheel-scroll-amount '(1 ((shift) . 1))
   require-final-newline t
-  use-short-answers t)
-
-(setq indent-tabs-mode nil)
-(setq tab-width 2)
-(setq large-file-warning-threshold 100000000) ; Set to 100 MB
+  use-short-answers t
+  tab-width 2
+  large-file-warning-threshold 100000000)
 
 (global-auto-revert-mode t)
 (delete-selection-mode 1)
-;; (tool-bar-mode -1) ;; needs to disabled in init.el
 
 ;; macOS-specific
 (setq
@@ -76,26 +67,15 @@
  mac-option-modifier 'meta
  mac-right-option-modifier 'hyper
  mac-control-modifier 'control
- mac-right-control-modifier 'control)
-
-(setq ns-use-native-fullscreen t)
-
-(setq select-enable-clipboard nil)
+ mac-right-control-modifier 'control
+ ns-use-native-fullscreen t
+ select-enable-clipboard nil)
 
 ;; enabling some functions that are considered risky by default
 (dolist (c '(narrow-to-region narrow-to-page upcase-region downcase-region))
   (put c 'disabled nil))
 
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-(setq require-final-newline t)
-
-(setq sentence-end-double-space nil)
-
 (setq-default line-spacing 0)
-(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
-(set-fontset-font t 'symbol (font-spec :family "PragmataPro")) ;; to display unicode symbols properly
-
-(require 'subr-x)
 
 (defun variable-pitch-mode-on ()
   "Enable `variable-pitch-mode'."
@@ -133,13 +113,17 @@
          (variable .
           ;; (:family "Atkinson Hyperlegible" :height 190)
           ;; (:family "Charter" :height 190)
-          (:family "Helvetica" :height 210)
-          ;;
-          ))))))
+          (:family "Helvetica" :height 210)))))))
 
-(define-key (current-global-map) (kbd "C-x C-f") 'find-file-at-point)
+;; see /Users/pavel/Agent/260324--eye-unicode-symbol/plan.org
+(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
+(set-fontset-font t 'symbol (font-spec :family "PragmataPro")) ;; to display unicode symbols properly
 
-(use-package recentf
+(setq make-backup-files nil)
+
+(keymap-global-set "C-x C-f" #'find-file-at-point)
+
+(use-package recentf :ensure nil
   :config
   (recentf-mode 1)
   (setq
@@ -182,7 +166,6 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
     (call-interactively 'kill-buffer)))
 
 (keymap-global-set "C-x k" #'kill-buffer-dwim)
-(keymap-global-set "C-x C-b" #'ibuffer)
 
 (defun display-line-numbers-toggle ()
   "Toggle displaying line number in the buffer."
@@ -196,17 +179,23 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
 (keymap-global-set "C-c N" #'display-line-numbers-toggle)
 
 (add-hook 'before-save-hook #'delete-trailing-whitespace)
-(setq require-final-newline t)
 (setq-default indent-tabs-mode nil)
-(setq-default js-indent-level 2)
+(setq sentence-end-double-space nil)
 
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 
-(ido-mode -1)
-(setq ido-everywhere t
-      ido-enable-flex-matching t)
+(comment
+ (use-package ido
+    :config
+    (ido-mode 1)
+    (setq ido-everywhere t
+      ido-enable-flex-matching t)))
 
-(fido-vertical-mode -1)
+(use-package icomplete
+  :config
+    (fido-vertical-mode 1)
+    ;; (icomplete-vertical-mode 1)
+    )
 
 (setq completion-auto-help 'visible
       completion-auto-select 'second-tab)
@@ -219,10 +208,7 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
          (styles basic flex initials)
          (cycle . 5))))
 
-(setq completion-styles
-      '(basic substring partial-completion flex)
-      ;; '(substring partial-completion flex) ;; it will be configured with orderless
-      )
+(setq completion-styles '(basic substring partial-completion flex))
 
 (setq read-file-name-completion-ignore-case t
       read-buffer-completion-ignore-case t
@@ -237,7 +223,7 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
 (use-package emacs
   :bind
   (
-   ("C-x b" . ibuffer)
+   ("C-x C-b" . ibuffer)
    ("s-1" . delete-other-windows)
    ("s-2" . split-window-below)
    ("s-3" . split-window-right)
@@ -270,8 +256,8 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
   :config
   (grep-apply-setting 'grep-find-command
         '("rg --vimgrep '' $(git rev-parse --show-toplevel || echo .)" . 15))
-  (define-key (current-global-map) (kbd "M-s g") #'grep-find)
-  (define-key grep-mode-map (kbd "o") #'compile-goto-error))
+  (keymap-global-set "M-s g" #'grep-find)
+  (keymap-set grep-mode-map "o" #'compile-goto-error))
 
 (use-package js :ensure nil
   :config
