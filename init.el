@@ -98,32 +98,39 @@
     (apply #'set-face-attribute 'variable-pitch nil variable)))
 
 ;; Setting font depending on the machine
-(let ((machine-name (string-trim (shell-command-to-string "hostname"))))
+(let ((host (system-name)))
   (cond
-   ((equal machine-name "mac-mini.local")
+   ((equal host "mac-mini.local")
     (my-set-fonts
      '((fixed . (:family "PragmataPro" :height 180))
        (variable . (:family "Helvetica" :height 200)))))
-   ((equal machine-name "mini.local")
+   ((equal host "mini.home")
     (my-set-fonts
      '((fixed . (:family "PragmataPro" :height 190))
        (variable . (:family "Atkinson Hyperlegible" :height 240)))))
+   ((equal host "m4pro")
+    (my-set-fonts
+     '((fixed . (:family "PragmataPro" :height 180))
+       (variable .
+                 (:family "Atkinson Hyperlegible Next" :height 230)))))
    (t (my-set-fonts
        '((fixed . (:family "PragmataPro" :height 180))
          (variable .
-          ;; (:family "Atkinson Hyperlegible" :height 190)
-          ;; (:family "Charter" :height 190)
-          (:family "Helvetica" :height 210)))))))
+          ;; (:family "Atkinson Hyperlegible Next" :height 230)
+          ;; (:family "Charter" :height 200)
+          (:family "Helvetica" :height 200)))))))
 
 ;; see /Users/pavel/Agent/260324--eye-unicode-symbol/plan.org
-(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
+;;(set-fontset-font t 'cyrillic (font-spec :family "Helvetica"))
+(set-fontset-font t 'cyrillic (font-spec :family "Charter"))
+;;(set-fontset-font t 'cyrillic (font-spec :family "Atkinson Hyperlegible"))
 (set-fontset-font t 'symbol (font-spec :family "PragmataPro")) ;; to display unicode symbols properly
 
 (setq make-backup-files nil)
 
 (keymap-global-set "C-x C-f" #'find-file-at-point)
 
-(use-package recentf :ensure nil
+(use-package recentf
   :config
   (recentf-mode 1)
   (setq
@@ -157,6 +164,11 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
     (unless (file-writable-p file)
       (setq file (concat "/sudo::" file)))
     (find-file file)))
+
+
+(auto-save-mode 1)
+
+;; (and buffer-auto-save-file-name (>= buffer-saved-size 0)) ;; t
 
 (defun kill-buffer-dwim ()
   "Kills current buffer without prompt, with C-u it prompts for buffer to kill."
