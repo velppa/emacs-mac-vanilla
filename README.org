@@ -25,7 +25,7 @@ echo "$(date): ~/.config/emacs.vanilla directory recreated"
 #+end_src
 
 #+RESULTS:
-: Fri Feb  6 11:42:33 CET 2026: ~/.config/emacs.vanilla directory recreated
+: Fri Jun 26 16:10:26 CEST 2026: ~/.config/emacs.vanilla directory recreated
 
 ** Launch Emacs without configuration
 #+begin_src sh :results silent
@@ -319,7 +319,7 @@ See [[https://9to5answer.com/emacs-multiple-columns-one-buffer][Emacs - Multiple
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 #+end_src
 
-* Completions
+* Completion
 Starting with Emacs 28 fido-vertical-mode is available, so it
 provides built-in vertical selection mechanism, similar to Vertico.
 
@@ -328,17 +328,14 @@ There's a catch with Dired - to select the current directory, use
 
 #+begin_src elisp
 (comment
- (use-package ido
+ (use-package emacs
     :config
     (ido-mode 1)
-    (setq ido-everywhere t
-      ido-enable-flex-matching t)))
-
-(use-package icomplete
-  :config
+    (setq ido-everywhere t)
+    (setq ido-enable-flex-matching t)
     (fido-vertical-mode 1)
     ;; (icomplete-vertical-mode 1)
-    )
+      ))
 
 (setq completion-auto-help 'visible
       completion-auto-select 'second-tab)

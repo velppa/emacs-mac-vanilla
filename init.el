@@ -197,17 +197,14 @@ URL: https://emacs-fu.blogspot.com/2013/03/editing-with-root-privileges-once-mor
 (setq project-vc-extra-root-markers '("go.mod" ".project"))
 
 (comment
- (use-package ido
+ (use-package emacs
     :config
     (ido-mode 1)
-    (setq ido-everywhere t
-      ido-enable-flex-matching t)))
-
-(use-package icomplete
-  :config
+    (setq ido-everywhere t)
+    (setq ido-enable-flex-matching t)
     (fido-vertical-mode 1)
     ;; (icomplete-vertical-mode 1)
-    )
+      ))
 
 (setq completion-auto-help 'visible
       completion-auto-select 'second-tab)
